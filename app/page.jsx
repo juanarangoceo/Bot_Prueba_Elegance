@@ -116,14 +116,21 @@ export default function ChatPage() {
   }, [messages, isTyping]);
 
   const sendToGemini = useCallback(async (msgs) => {
+    // Fire API call immediately — runs in parallel with reading delay
+    const apiPromise = fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: msgs }),
+    }).then((r) => r.json());
+
+    // Reading delay before typing indicator — Jhonatan "lee" el mensaje primero
+    const lastMsg = msgs[msgs.length - 1];
+    const readingDelay = Math.min(1000 + lastMsg.content.length * 18, 2800);
+    await new Promise((r) => setTimeout(r, readingDelay));
+
     setIsTyping(true);
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: msgs }),
-      });
-      const data = await res.json();
+      const data = await apiPromise;
       if (data.error) throw new Error(data.error);
 
       const parts = data.parts || ["Lo siento, hubo un error. ¿Puedes repetirlo?"];
@@ -131,16 +138,16 @@ export default function ChatPage() {
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (i > 0) {
-          const delay = Math.min(400 + part.length * 25, 2500);
+          // Typing delay proporcional al largo del mensaje siguiente
+          const delay = Math.min(700 + part.length * 30, 3000);
           await new Promise((r) => setTimeout(r, delay));
         }
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: part, timestamp: Date.now() },
         ]);
-        // Short pause after delivering each part before showing typing again
         if (i < parts.length - 1) {
-          await new Promise((r) => setTimeout(r, 300));
+          await new Promise((r) => setTimeout(r, 400));
         }
       }
     } catch {
