@@ -128,23 +128,23 @@ export default function ChatPage() {
 
       const parts = data.parts || ["Lo siento, hubo un error. ¿Puedes repetirlo?"];
 
-      // Deliver messages one by one with humanized delays
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        // Delay based on message length — more realistic typing speed
-        const delay = i === 0 ? 0 : Math.min(800 + part.length * 18, 3000);
-        await new Promise((r) => setTimeout(r, delay));
-
+        if (i > 0) {
+          // Brief pause before each subsequent message — simulates typing speed
+          const delay = Math.min(900 + part.length * 20, 3200);
+          await new Promise((r) => setTimeout(r, delay));
+        }
         setMessages((prev) => [
           ...prev,
-          {
-            role: "assistant",
-            content: part,
-            timestamp: Date.now(),
-          },
+          { role: "assistant", content: part, timestamp: Date.now() },
         ]);
+        // Short pause after delivering each part before showing typing again
+        if (i < parts.length - 1) {
+          await new Promise((r) => setTimeout(r, 300));
+        }
       }
-    } catch (err) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -180,17 +180,13 @@ export default function ChatPage() {
     if (!text || isTyping) return;
 
     const userMsg = { role: "user", content: text, timestamp: Date.now() };
-    const newMessages = [...messages.filter((m) => !m.content.startsWith("[El cliente")), userMsg];
+    const visibleHistory = messages.filter((m) => !m.content.startsWith("[El cliente"));
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     inputRef.current?.focus();
 
-    // Build history without the hidden system prompt message
-    const historyForApi = [
-      ...messages.filter((m) => !m.content.startsWith("[El cliente")),
-      userMsg,
-    ];
+    const historyForApi = [...visibleHistory, userMsg];
 
     await sendToGemini(historyForApi);
   };

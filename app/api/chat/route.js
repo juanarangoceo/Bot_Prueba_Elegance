@@ -11,7 +11,6 @@ export async function POST(req) {
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    // Convert our message format to Gemini's format
     const history = messages.slice(0, -1).map((msg) => ({
       role: msg.role === "assistant" ? "model" : "user",
       parts: [{ text: msg.content }],
@@ -31,18 +30,15 @@ export async function POST(req) {
       config: {
         systemInstruction: buildSystemPrompt(),
         thinkingConfig: {
-          thinkingLevel: "low", // Low latency for chat — feels more human/instant
+          thinkingBudget: 0, // Sin thinking — máxima velocidad para chat en tiempo real
         },
-        generationConfig: {
-          temperature: 1.0, // Gemini 3 recommended default
-          maxOutputTokens: 1024,
-        },
+        temperature: 1.0,
+        maxOutputTokens: 1024,
       },
     });
 
     const text = response.text || "";
 
-    // Split by ||| for multi-message support with delays
     const parts = text
       .split("|||")
       .map((p) => p.trim())
