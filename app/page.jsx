@@ -141,11 +141,9 @@ export default function ChatPage() {
 
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
-        if (i > 0) {
-          // Typing delay proporcional al largo — simula persona escribiendo despacio
-          const delay = Math.min(1500 + part.length * 50, 5000);
-          await new Promise((r) => setTimeout(r, delay));
-        }
+        // Todos los mensajes tienen delay de escritura, incluido el primero
+        const delay = Math.min(1500 + part.length * 50, 5000);
+        await new Promise((r) => setTimeout(r, delay));
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: part, timestamp: Date.now() },
