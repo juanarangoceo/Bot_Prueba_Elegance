@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef, useCallback } from "react";
 import { PRODUCTS } from "../lib/products.js";
 
 const JHONATAN_AVATAR = "https://ui-avatars.com/api/?name=Jhonatan&background=25d366&color=fff&size=128&bold=true&font-size=0.4";
@@ -103,9 +103,9 @@ export default function ChatPage() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [started, setStarted] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const isProcessing = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -116,6 +116,10 @@ export default function ChatPage() {
   }, [messages, isTyping]);
 
   const sendToGemini = useCallback(async (msgs) => {
+    // Guard against concurrent calls
+    if (isProcessing.current) return;
+    isProcessing.current = true;
+
     // Fire API call immediately — runs in parallel with reading delay
     const apiPromise = fetch("/api/chat", {
       method: "POST",
@@ -161,38 +165,20 @@ export default function ChatPage() {
       ]);
     } finally {
       setIsTyping(false);
+      isProcessing.current = false;
     }
   }, []);
 
-  // Auto-start: Jhonatan sends the first message
-  useEffect(() => {
-    if (started) return;
-    setStarted(true);
-    const greeting = [
-      {
-        role: "user",
-        content: "[El cliente acaba de abrir el chat por primera vez. Salúdalo cálidamente.]",
-        timestamp: Date.now(),
-      },
-    ];
-    // Small delay before Jhonatan "responds"
-    setTimeout(() => {
-      sendToGemini(greeting);
-    }, 1200);
-  }, [started, sendToGemini]);
-
   const handleSend = async () => {
     const text = input.trim();
-    if (!text || isTyping) return;
+    if (!text || isTyping || isProcessing.current) return;
 
     const userMsg = { role: "user", content: text, timestamp: Date.now() };
-    const visibleHistory = messages.filter((m) => !m.content.startsWith("[El cliente"));
-
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     inputRef.current?.focus();
 
-    const historyForApi = [...visibleHistory, userMsg];
+    const historyForApi = [...messages, userMsg];
 
     await sendToGemini(historyForApi);
   };
@@ -204,7 +190,7 @@ export default function ChatPage() {
     }
   };
 
-  const visibleMessages = messages.filter((m) => !m.content.startsWith("[El cliente"));
+  const visibleMessages = messages;
 
   return (
     <>
