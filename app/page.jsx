@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { PRODUCTS } from "../lib/products.js";
 
 const JHONATAN_AVATAR = "https://ui-avatars.com/api/?name=Jhonatan&background=25d366&color=fff&size=128&bold=true&font-size=0.4";
