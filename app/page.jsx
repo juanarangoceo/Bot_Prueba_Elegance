@@ -131,8 +131,7 @@ export default function ChatPage() {
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (i > 0) {
-          // Brief pause before each subsequent message — simulates typing speed
-          const delay = Math.min(900 + part.length * 20, 3200);
+          const delay = Math.min(400 + part.length * 25, 2500);
           await new Promise((r) => setTimeout(r, delay));
         }
         setMessages((prev) => [
