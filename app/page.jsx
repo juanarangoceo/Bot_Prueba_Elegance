@@ -129,7 +129,7 @@ export default function ChatPage() {
 
     // Reading delay before typing indicator — Jhonatan "lee" el mensaje primero
     const lastMsg = msgs[msgs.length - 1];
-    const readingDelay = Math.min(1000 + lastMsg.content.length * 18, 2800);
+    const readingDelay = Math.min(1800 + lastMsg.content.length * 35, 5000);
     await new Promise((r) => setTimeout(r, readingDelay));
 
     setIsTyping(true);
@@ -142,8 +142,8 @@ export default function ChatPage() {
       for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (i > 0) {
-          // Typing delay proporcional al largo del mensaje siguiente
-          const delay = Math.min(700 + part.length * 30, 3000);
+          // Typing delay proporcional al largo — simula persona escribiendo despacio
+          const delay = Math.min(1500 + part.length * 50, 5000);
           await new Promise((r) => setTimeout(r, delay));
         }
         setMessages((prev) => [
@@ -151,7 +151,7 @@ export default function ChatPage() {
           { role: "assistant", content: part, timestamp: Date.now() },
         ]);
         if (i < parts.length - 1) {
-          await new Promise((r) => setTimeout(r, 400));
+          await new Promise((r) => setTimeout(r, 700));
         }
       }
     } catch {
